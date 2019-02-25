@@ -1,4 +1,3 @@
-local luasocket = require 'socket'
 local Receiver = require 'stuart.streaming.Receiver'
 local redis = require 'redis'
 local stuart = require 'stuart'
@@ -35,7 +34,6 @@ function PubSubReceiver:poll(durationBudget)
   local now = require 'stuart.interface'.now
   local startTime = now()
   local data = {}
-  local minWait = 0.1
   for message, abort in self.subscriptionIterator do
     if message ~= nil and message.kind == 'subscribe' then
       self.log:info(string.format('Subscribed to channel %s', message.channel))

@@ -1,71 +1,45 @@
-<img align="right" src="stuart.png" width="70">
+<img align="right" src="stuart-redis.png" width="100">
 
-## Extended Redis support for Stuart
+## Stuart-Redis
 
-[Stuart](https://github.com/BixData/stuart) is the Apache Spark runtime for embedding and edge computing.
-
-[Redis](https://redis.io) is your favorite "app server" and data structure service.
-
-This project contains extensions to Stuart that are specific to working with Redis.
-
+[![Build Status](https://travis-ci.org/BixData/stuart-redis.svg?branch=master)](https://travis-ci.org/BixData/stuart-redis)
 [![License](http://img.shields.io/badge/Licence-Apache%202.0-blue.svg)](LICENSE)
+[![Lua](https://img.shields.io/badge/Lua-5.1%20|%205.2%20|%205.3%20|%20JIT%202.0%20|%20JIT%202.1%20-blue.svg)]()
+
+A library for reading and writing data from and to [Redis](https://redis.io) with [Stuart](https://github.com/BixData/stuart), the Apache Spark runtime for embedding and edge computing.
+
+This library can be used in two ways:
+
+* __external__ to a remote Redis server, in which case the [redis-lua](https://luarocks.org/modules/nrk/redis-lua) client library is used to read and write remote data structures
+* __embedded__ within an [amalgamated](https://github.com/BixData/lua-amalg-redis) Stuart-based Spark job within a [Redis eval](https://redis.io/commands/eval) command, in which case the `redis` global variable is used to read and write local data structures
+
+Spark data structures are mapped to Redis with guidance from the [spark-redis](https://github.com/RedisLabs/spark-redis) project by Redis Labs, and also mirrors that project's documentation structure.
 
 ## Getting Started
 
-To use these examples on an operating system, start by installing a Redis client libary. My current preference is one based on LuaSocket, [because I can also use it in Go apps](https://github.com/BixData/gluasocket):
+```sh
+$ luarocks install stuart-redis
+```
+
+To work with a remote Redis server, a Redis client libary will also be required. [redis-lua](https://luarocks.org/modules/nrk/redis-lua) is currently favored because it is based on LuaSocket, [which can also be used within a Go app](https://github.com/BixData/gluasocket):
 
 ```sh
-$ luarocks install stuart
 $ luarocks install redis-lua
 ```
 
-## Spark Streaming Pub/Sub Receiver
+## Documentation
 
-If you have a Spark Streaming based loop that would like to ingest data from a Redis Pub/Sub channel, use the `PubSubReceiver` class:
+* [Streaming](./doc/streaming.md)
 
-```lua
-local stuart = require 'stuart'
-local PubSubReceiver = require './PubSubReceiver'
+## Building
 
-local sc = stuart.NewContext()
-local ssc = stuart.NewStreamingContext(sc, 1.5)
-
-local redisUrl = os.getenv('REDIS_URL') or 'redis://127.0.0.1:6379'
-local receiver = PubSubReceiver.new(ssc, redisUrl, {'mychannel'})
-local dstream = ssc:receiverStream(receiver)
-dstream:foreachRDD(function(rdd)
-  print('Received RDD: ' .. table.concat(rdd:collect(), ','))
-end)
-ssc:start()
-ssc:awaitTermination()
-ssc:stop()
+```
+$ luarocks make stuart-redis-<version>.rockspec
+stuart-redis <version> is now installed in /usr/local (license: Apache 2.0)
 ```
 
-Run the sample Spark Streaming loop:
+## Testing
 
-```sh
-$ cd pubsub
-$ REDIS_URL=redis://127.0.0.1:6379/mychannel lua main.lua
 ```
-
-And then feed its ingest engine by publishing to Redis. The default batch size set in `main.lu` is 1.5 seconds, which gives you enough time to publish two messages into the same RDD:
-
-```sh
-$ redis-cli
-127.0.0.1:6379> publish mychannel one
-127.0.0.1:6379> publish mychannel two
-127.0.0.1:6379> publish mychannel three
+$ REDIS_URL=redis://localhost:6379 busted -v
 ```
-
-The Spark Streaming loop will report:
-
-```	
-$ lua main.lua 
-INFO Running Stuart (Embedded Spark 2.2.0)
-INFO Connected to redis://127.0.0.1:6379
-INFO Subscribed to channel mychannel
-Received RDD: one
-Received RDD: two,three
-```
-
-The full example is in the [pubsub/](./pubsub/) folder.

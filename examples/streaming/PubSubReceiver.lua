@@ -1,5 +1,5 @@
+local PubSubReceiver = require 'stuart-redis.streaming.PubSubReceiver'
 local stuart = require 'stuart'
-local PubSubReceiver = require './PubSubReceiver'
 
 local sc = stuart.NewContext()
 local ssc = stuart.NewStreamingContext(sc, 1.5)
