@@ -22,8 +22,10 @@ function RedisConfig:getDbNum()
 end
 
 function RedisConfig.newFromSparkConf(conf)
+  local SparkConf = require 'stuart.SparkConf'
+  assert(stuart.istype(conf, SparkConf))
   local RedisEndpoint = require 'stuart-redis.RedisEndpoint'
-  return RedisConfig.new(RedisEndpoint.new(conf))
+  return RedisConfig.new(RedisEndpoint.newFromSparkConf(conf))
 end
 
 return RedisConfig

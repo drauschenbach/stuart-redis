@@ -29,6 +29,7 @@ function RedisEndpoint:connect()
 end
 
 function RedisEndpoint.newFromSparkConf(conf)
+  function conf:getInt(key, defaultValue) return tonumber(conf:get(key, defaultValue)) end
   return RedisEndpoint.new(
     conf:get   ('spark.redis.host'),
     conf:getInt('spark.redis.port'),

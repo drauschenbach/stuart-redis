@@ -48,11 +48,11 @@ describe('Redis Labs Spark-Redis RedisRddSuite', function()
       :reduceByKey(function(r, x) return r+x end)
       :map(function(e) return {e[1], tostring(e[2])} end)
     
-    sc:toRedisKV(wordCounts)
+    sc:toRedisKV  (wordCounts)
     sc:toRedisZSET(wordCounts, 'all:words:cnt:sortedset')
     sc:toRedisHASH(wordCounts, 'all:words:cnt:hash')
     sc:toRedisLIST(words, 'all:words:list')
-    sc:toRedisSET(words, 'all:words:set')
+    sc:toRedisSET (words, 'all:words:set')
   end)
 
   it('RedisKVRDD', function()
