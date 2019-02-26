@@ -78,6 +78,24 @@ function RedisRemoteContext:fromRedisList(keysOrKeyPattern, numPartitions)
   end
 end
 
+function RedisRemoteContext:fromRedisSet(keysOrKeyPattern, numPartitions)
+  local redisConf = RedisConfig.newFromSparkConf(self:getConf())
+  local conn = redisConf:connection()
+  if type(keysOrKeyPattern) == 'table' then
+    error('NIY')
+  else
+    local setKeys = self:filterKeysByType(conn, conn:keys(keysOrKeyPattern), 'set')
+    local res = {}
+    for _, setKey in ipairs(setKeys) do
+      local values = conn:smembers(setKey)
+      for _, value in ipairs(values) do
+        res[#res+1] = value
+      end
+    end
+    return self:parallelize(res, numPartitions)
+  end
+end
+
 function RedisRemoteContext:setHash(hashName, data, ttl, redisConf)
   self:foreachWithPipeline(redisConf, data, function(pipeline, item)
     local k, v = item[1], item[2]

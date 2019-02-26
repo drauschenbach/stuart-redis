@@ -91,4 +91,12 @@ describe('Redis Labs Spark-Redis RedisRddSuite', function()
     assert.same(expectedWords, actualWords)
   end)
   
+  it('SparkContext:fromRedisSet', function()
+    if not stuart.istype(sc, RedisContext) then return pending('No REDIS_URL is configured') end
+    local expectedWords = words:distinct():sortBy(function(x) return x end):collect()
+    local redisSetRDD = sc:fromRedisSet('all:words:set')
+    local actualWords = redisSetRDD:sortBy(function(x) return x end):collect()
+    assert.same(expectedWords, actualWords)
+  end)
+  
 end)
