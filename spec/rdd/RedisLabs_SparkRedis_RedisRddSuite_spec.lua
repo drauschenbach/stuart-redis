@@ -65,7 +65,7 @@ describe('Redis Labs Spark-Redis RedisRddSuite', function()
       :map(function(x) return {x[1], tostring(#x[2])} end)
       :sortBy(function(x) return x[1] end)
       :collect()
-    assert.same(kvContents, wordCounts)
+    assert.same(wordCounts, kvContents)
   end)
 
 end)

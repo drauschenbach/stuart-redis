@@ -4,6 +4,15 @@ local stuart = require 'stuart'
 
 local RedisRemoteContext = stuart.class(RedisContext)
 
+function RedisRemoteContext:filterKeysByType(conn, keys, typeFilter)
+  local res = {}
+  for _, key in ipairs(keys) do
+    local type = conn:type(key)
+    if type == typeFilter then res[#res+1] = key end
+  end
+  return res
+end
+
 function RedisRemoteContext:foreachWithPipeline(redisConf, items, f)
   local conn = redisConf:connection()
   
@@ -21,27 +30,19 @@ function RedisRemoteContext:foreachWithPipeline(redisConf, items, f)
   
 end
 
-function RedisRemoteContext:fromRedisKeyPattern(keyPattern, numPartitions, redisConf)
-  local conn = redisConf:connection()
-  local keys = conn:keys(keyPattern)
-  local res = {}
-  for _, key in ipairs(keys) do
-    local value = conn:get(key)
-    res[#res+1] = {key, value}
-  end
-  return self:parallelize(res, numPartitions)
-end
-
-function RedisRemoteContext:fromRedisKeys()
-  error('NIY')
-end
-
-function RedisRemoteContext:fromRedisKV(keysOrKeyPattern, partitionNum)
+function RedisRemoteContext:fromRedisKV(keysOrKeyPattern, numPartitions)
   local redisConf = RedisConfig.newFromSparkConf(self:getConf())
+  local conn = redisConf:connection()
   if type(keysOrKeyPattern) == 'table' then
-    return self:fromRedisKeys(keysOrKeyPattern, partitionNum, redisConf)
+    error('NIY')
   else
-    return self:fromRedisKeyPattern(keysOrKeyPattern, partitionNum, redisConf)
+    local keys = self:filterKeysByType(conn, conn:keys(keysOrKeyPattern), 'string')
+    local res = {}
+    for _, key in ipairs(keys) do
+      local value = conn:get(key)
+      res[#res+1] = {key, value}
+    end
+    return self:parallelize(res, numPartitions)
   end
 end
 
