@@ -30,6 +30,20 @@ function RedisRemoteContext:foreachWithPipeline(redisConf, items, f)
   
 end
 
+function RedisRemoteContext:fromRedisHash(keysOrKeyPattern, numPartitions)
+  local redisConf = RedisConfig.newFromSparkConf(self:getConf())
+  local conn = redisConf:connection()
+  local hashKeys = self:filterKeysByType(conn, conn:keys(keysOrKeyPattern), 'hash')
+  local res = {}
+  for _, hashKey in ipairs(hashKeys) do
+    local kvs = conn:hgetall(hashKey)
+    for k,v in pairs(kvs) do
+      res[#res+1] = {k, v}
+    end
+  end
+  return self:parallelize(res, numPartitions)
+end
+
 function RedisRemoteContext:fromRedisKV(keysOrKeyPattern, numPartitions)
   local redisConf = RedisConfig.newFromSparkConf(self:getConf())
   local conn = redisConf:connection()

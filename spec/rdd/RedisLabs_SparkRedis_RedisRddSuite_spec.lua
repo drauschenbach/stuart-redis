@@ -67,5 +67,20 @@ describe('Redis Labs Spark-Redis RedisRddSuite', function()
       :collect()
     assert.same(wordCounts, kvContents)
   end)
+  
+  -- TODO RedisZsetRDD
 
+  it('RedisHashRDD', function()
+    if not stuart.istype(sc, RedisContext) then return pending('No REDIS_URL is configured') end
+    local redisHashRDD = sc:fromRedisHash('all:words:cnt:hash')
+    local hashContents = redisHashRDD:sortByKey():collect()
+    local wordCounts = words
+      :map(function(word) return {word, 1} end)
+      :groupBy(function(e) return e[1] end)
+      :map(function(x) return {x[1], tostring(#x[2])} end)
+      :sortBy(function(x) return x[1] end)
+      :collect()
+    assert.same(wordCounts, hashContents)
+  end)
+  
 end)
