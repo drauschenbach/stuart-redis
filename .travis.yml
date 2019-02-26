@@ -20,6 +20,9 @@ install:
   - luarocks install redis-lua
   - luarocks install stuart
 
+services:
+  - redis-server
+
 script:
   - luacheck --std max+busted --codes examples spec src --globals "_" --ignore 122 212 213 241 611
-  - busted --verbose --defer-print
+  - REDIS_URL=redis://localhost:6379 busted --verbose --defer-print
