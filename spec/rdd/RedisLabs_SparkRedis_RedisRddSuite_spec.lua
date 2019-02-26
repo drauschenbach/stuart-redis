@@ -1,3 +1,4 @@
+local RedisContext = require 'stuart-redis.RedisContext'
 local RedisEndpoint = require 'stuart-redis.RedisEndpoint'
 local SparkConf = require 'stuart.SparkConf'
 local stuart = require 'stuart'
@@ -5,7 +6,7 @@ local stuartRedis = require 'stuart-redis'
 
 describe('Redis Labs Spark-Redis RedisRddSuite', function()
 
-  local sc
+  local sc, words
 
   local blog = assert(io.open('spec-fixtures/blog', 'r'))
   local content = blog:read('*all')
@@ -40,7 +41,7 @@ describe('Redis Labs Spark-Redis RedisRddSuite', function()
     sc = stuart.NewContext(conf)
     sc = stuartRedis.export(sc)
 
-    local words = sc:parallelize(split(content, '%w+'))
+    words = sc:parallelize(split(content, '%w+'))
     
     local wordCounts = words
       :map(function(word) return {word, 1} end)
@@ -54,10 +55,17 @@ describe('Redis Labs Spark-Redis RedisRddSuite', function()
     sc:toRedisSET(words, 'all:words:set')
   end)
 
-  it('TODO...', function()
-    local redisUrl = os.getenv('REDIS_URL')
-    if not redisUrl then return pending('No REDIS_URL is configured') end
-    -- TODO
+  it('RedisKVRDD', function()
+    if not stuart.istype(sc, RedisContext) then return pending('No REDIS_URL is configured') end
+    local redisKVRDD = sc:fromRedisKV('*')
+    local kvContents = redisKVRDD:sortByKey():collect()
+    local wordCounts = words
+      :map(function(word) return {word, 1} end)
+      :groupBy(function(e) return e[1] end)
+      :map(function(x) return {x[1], tostring(#x[2])} end)
+      :sortBy(function(x) return x[1] end)
+      :collect()
+    assert.same(kvContents, wordCounts)
   end)
 
 end)
