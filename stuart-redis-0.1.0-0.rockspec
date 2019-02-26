@@ -16,12 +16,18 @@ description = {
 }
 dependencies = {
    "lua >= 5.1",
+   "net-url ~> 0.9",
    "stuart ~> 2"
 }
 build = {
    type = "builtin",
    modules = {
-      ["stuart"] = "src/stuart-redis.lua",
+      ["stuart-redis"]                          = "src/stuart-redis.lua",
+      ["stuart-redis.RedisConfig"]              = "src/stuart-redis/RedisConfig.lua",
+      ["stuart-redis.RedisContext"]             = "src/stuart-redis/RedisContext.lua",
+      ["stuart-redis.RedisEmbeddedContext"]     = "src/stuart-redis/RedisEmbeddedContext.lua",
+      ["stuart-redis.RedisEndpoint"]            = "src/stuart-redis/RedisEndpoint.lua",
+      ["stuart-redis.RedisRemoteContext"]       = "src/stuart-redis/RedisRemoteContext.lua",
       ["stuart-redis.streaming.PubSubReceiver"] = "src/stuart-redis/streaming/PubSubReceiver.lua"
    }
 }

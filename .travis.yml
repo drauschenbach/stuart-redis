@@ -14,7 +14,12 @@ before_install:
   - export PATH=$PATH:$PWD/lua_install/bin
 
 install:
+  - luarocks install busted
   - luarocks install luacheck
+  - luarocks install net-url 0.9
+  - luarocks install redis-lua
+  - luarocks install stuart
 
 script:
-  - luacheck --std max --codes src --globals "_" --ignore 122 213 241 611
+  - luacheck --std max+busted --codes examples spec src --globals "_" --ignore 122 212 213 241 611
+  - busted --verbose --defer-print
