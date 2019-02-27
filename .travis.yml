@@ -14,6 +14,7 @@ before_install:
   - export PATH=$PATH:$PWD/lua_install/bin
 
 install:
+  - luarocks install amalg-redis
   - luarocks install busted
   - luarocks install luacheck
   - luarocks install net-url 0.9
@@ -24,5 +25,5 @@ services:
   - redis-server
 
 script:
-  - luacheck --std max+busted --codes examples spec src --globals "_" --ignore 122 212 213 241 611
+  - luacheck --std max+busted --codes examples spec src --globals "_" redis --ignore 122 212 213 241 611
   - REDIS_URL=redis://localhost:6379 busted --verbose --defer-print
