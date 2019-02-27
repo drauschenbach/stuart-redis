@@ -76,6 +76,23 @@ function RedisEmbeddedContext:fromRedisSet(keysOrKeyPattern, numPartitions)
   end
 end
 
+function RedisEmbeddedContext:fromRedisZRangeByScore(keysOrKeyPattern, startScore, endScore, numPartitions)
+  if type(keysOrKeyPattern) == 'table' then
+    error('NIY')
+  else
+    local allKeys = redis.call('KEYS', keysOrKeyPattern)
+    local zsetKeys = self:filterKeysByType(allKeys, 'zset')
+    local res = {}
+    for _, zsetKey in ipairs(zsetKeys) do
+      local values = redis.call('ZRANGEBYSCORE', zsetKey, startScore, endScore)
+      for _, value in ipairs(values) do
+        res[#res+1] = value
+      end
+    end
+    return self:parallelize(res, numPartitions)
+  end
+end
+
 function RedisEmbeddedContext:toRedisHash()
   error('NIY')
 end

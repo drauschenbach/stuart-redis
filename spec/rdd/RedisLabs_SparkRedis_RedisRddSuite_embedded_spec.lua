@@ -115,7 +115,7 @@ describe('Redis Labs Spark-Redis RedisRddSuite (running embedded within a Redis 
       :map(function(e) return {e[1], tostring(e[2])} end)
     
     sc:toRedisKV  (wordCounts)
---    sc:toRedisZSET(wordCounts, 'all:words:cnt:sortedset')
+    sc:toRedisZSET(wordCounts, 'all:words:cnt:sortedset')
     sc:toRedisHASH(wordCounts, 'all:words:cnt:hash')
     sc:toRedisLIST(words     , 'all:words:list')
     sc:toRedisSET (words     , 'all:words:set')
@@ -201,6 +201,38 @@ assert(
 local expectedWords = words:distinct():sortBy(function(x) return x end):collect()
 local redisSetRDD = sc:fromRedisSet('all:words:set')
 local actualWords = redisSetRDD:sortBy(function(x) return x end):collect()
+assert(
+  #expectedWords == #actualWords,
+  'Expected ' .. #expectedWords .. ' words but found ' .. #actualWords)
+]])
+    amalgCapture()
+    replaceAmalgCacheRemoteWithEmbeddedContext()
+    amalg()
+    local testWithDependencies = assert(io.open('test-with-dependencies.lua', 'r'))
+    local script = testWithDependencies:read('*all')
+    local redisClientLib = require 'redis'
+    local redisClient = redisClientLib.connect(os.getenv('REDIS_URL'))
+    assert.equals('SUCCESS', redisClient:eval(script, 0))
+  end)
+  
+  
+  -- TODO fromRedisZRange
+  
+  
+  it('SparkContext:fromRedisZRangeByScore', function()
+    if not stuart.istype(sc, RedisContext) then return pending('No REDIS_URL is configured') end
+    generateTestScript(blogContent, [[
+local expectedWordCounts = words
+  :map(function(word) return {word, 1} end)
+  :groupBy(function(x) return x[1] end)
+  :map(function(x) return {x[1], #x[2]} end)
+  :filter(function(x) return x[2] >= 3 and x[2] <= 9 end)
+local expectedWords = expectedWordCounts
+  :map(function(x) return x[1] end)
+  :sortBy(function(x) return x end)
+  :collect()
+local actualWords = sc:fromRedisZRangeByScore('all:words:cnt:sortedset', 3, 9)
+  :sortBy(function(x) return x end):collect()
 assert(
   #expectedWords == #actualWords,
   'Expected ' .. #expectedWords .. ' words but found ' .. #actualWords)
