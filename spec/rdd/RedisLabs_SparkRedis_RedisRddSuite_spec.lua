@@ -137,4 +137,17 @@ describe('Redis Labs Spark-Redis RedisRddSuite', function()
     assert.same(expectedWords, actualWords)
   end)
   
+  it('SparkContext:fromRedisZSetWithScore', function()
+    if not stuart.istype(sc, RedisContext) then return pending('No REDIS_URL is configured') end
+    local expectedWordCounts = words
+      :map(function(word) return {word, 1} end)
+      :groupBy(function(x) return x[1] end)
+      :map(function(x) return {x[1], tostring(#x[2])} end)
+      :sortBy(function(x) return x[1] end)
+      :collect()
+    local actualWordCounts = sc:fromRedisZSetWithScore('all:words:cnt:sortedset')
+      :sortByKey():collect()
+    assert.same(expectedWordCounts, actualWordCounts)
+  end)
+  
 end)

@@ -136,6 +136,10 @@ function RedisRemoteContext:fromRedisZSet(keysOrKeyPattern, numPartitions)
   return self:fromRedisZRange(keysOrKeyPattern, 0, -1, numPartitions)
 end
 
+function RedisRemoteContext:fromRedisZSetWithScore(keysOrKeyPattern, numPartitions)
+  return self:fromRedisZRangeWithScore(keysOrKeyPattern, 0, -1, numPartitions)
+end
+
 function RedisRemoteContext:setHash(hashName, data, ttl, redisConf)
   self:foreachWithPipeline(redisConf, data, function(pipeline, item)
     local k, v = item[1], item[2]
