@@ -118,7 +118,7 @@ describe('Redis Labs Spark-Redis RedisRddSuite (running embedded within a Redis 
 --    sc:toRedisZSET(wordCounts, 'all:words:cnt:sortedset')
     sc:toRedisHASH(wordCounts, 'all:words:cnt:hash')
     sc:toRedisLIST(words     , 'all:words:list')
---    sc:toRedisSET (words     , 'all:words:set')
+    sc:toRedisSET (words     , 'all:words:set')
   end)
 
 
@@ -180,6 +180,27 @@ assert(
 local expectedWords = words:sortBy(function(x) return x end):collect()
 local redisListRDD = sc:fromRedisList('all:words:list')
 local actualWords = redisListRDD:sortBy(function(x) return x end):collect()
+assert(
+  #expectedWords == #actualWords,
+  'Expected ' .. #expectedWords .. ' words but found ' .. #actualWords)
+]])
+    amalgCapture()
+    replaceAmalgCacheRemoteWithEmbeddedContext()
+    amalg()
+    local testWithDependencies = assert(io.open('test-with-dependencies.lua', 'r'))
+    local script = testWithDependencies:read('*all')
+    local redisClientLib = require 'redis'
+    local redisClient = redisClientLib.connect(os.getenv('REDIS_URL'))
+    assert.equals('SUCCESS', redisClient:eval(script, 0))
+  end)
+
+
+  it('SparkContext:fromRedisSet', function()
+    if not stuart.istype(sc, RedisContext) then return pending('No REDIS_URL is configured') end
+    generateTestScript(blogContent, [[
+local expectedWords = words:distinct():sortBy(function(x) return x end):collect()
+local redisSetRDD = sc:fromRedisSet('all:words:set')
+local actualWords = redisSetRDD:sortBy(function(x) return x end):collect()
 assert(
   #expectedWords == #actualWords,
   'Expected ' .. #expectedWords .. ' words but found ' .. #actualWords)

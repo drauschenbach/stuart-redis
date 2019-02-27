@@ -32,11 +32,11 @@ function RedisEmbeddedContext:fromRedisKV(keysOrKeyPattern, numPartitions)
     error('NIY')
   else
     local allKeys = redis.call('KEYS', keysOrKeyPattern)
-    local keys = self:filterKeysByType(allKeys, 'string')
-    local mgetRes = redis.call('MGET', unpack(keys))
+    local stringKeys = self:filterKeysByType(allKeys, 'string')
+    local mgetRes = redis.call('MGET', unpack(stringKeys))
     local res = {}
-    for i, key in ipairs(keys) do
-      res[#res+1] = {key, mgetRes[i]}
+    for i, stringKey in ipairs(stringKeys) do
+      res[#res+1] = {stringKey, mgetRes[i]}
     end
     return self:parallelize(res, numPartitions)
   end
@@ -51,6 +51,23 @@ function RedisEmbeddedContext:fromRedisList(keysOrKeyPattern, numPartitions)
     local res = {}
     for _, listKey in ipairs(listKeys) do
       local values = redis.call('LRANGE', listKey, 0, -1)
+      for _, value in ipairs(values) do
+        res[#res+1] = value
+      end
+    end
+    return self:parallelize(res, numPartitions)
+  end
+end
+
+function RedisEmbeddedContext:fromRedisSet(keysOrKeyPattern, numPartitions)
+  if type(keysOrKeyPattern) == 'table' then
+    error('NIY')
+  else
+    local allKeys = redis.call('KEYS', keysOrKeyPattern)
+    local setKeys = self:filterKeysByType(allKeys, 'set')
+    local res = {}
+    for _, setKey in ipairs(setKeys) do
+      local values = redis.call('SMEMBERS', setKey)
       for _, value in ipairs(values) do
         res[#res+1] = value
       end
