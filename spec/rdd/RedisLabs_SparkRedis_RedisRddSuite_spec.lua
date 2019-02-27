@@ -115,6 +115,22 @@ describe('Redis Labs Spark-Redis RedisRddSuite', function()
   end)
   --]]
   
+  it('SparkContext:fromRedisZRangeByScore', function()
+    if not stuart.istype(sc, RedisContext) then return pending('No REDIS_URL is configured') end
+    local expectedWordCounts = words
+      :map(function(word) return {word, 1} end)
+      :groupBy(function(x) return x[1] end)
+      :map(function(x) return {x[1], #x[2]} end)
+      :filter(function(x) return x[2] >= 3 and x[2] <= 9 end)
+    local expectedWords = expectedWordCounts
+      :map(function(x) return x[1] end)
+      :sortBy(function(x) return x end)
+      :collect()
+    local actualWords = sc:fromRedisZRangeByScore('all:words:cnt:sortedset', 3, 9)
+      :sortBy(function(x) return x end):collect()
+    assert.same(expectedWords, actualWords)
+  end)
+
   -- disable until Stuart 2.0.3 ships due to Stuart issue-129
   --[[
   it('SparkContext:fromRedisZRangeWithScore', function()

@@ -114,6 +114,24 @@ function RedisRemoteContext:fromRedisZRange(keysOrKeyPattern, startRange, endRan
   end
 end
 
+function RedisRemoteContext:fromRedisZRangeByScore(keysOrKeyPattern, startScore, endScore, numPartitions)
+  local redisConf = RedisConfig.newFromSparkConf(self:getConf())
+  local conn = redisConf:connection()
+  if type(keysOrKeyPattern) == 'table' then
+    error('NIY')
+  else
+    local zsetKeys = self:filterKeysByType(conn, conn:keys(keysOrKeyPattern), 'zset')
+    local res = {}
+    for _, zsetKey in ipairs(zsetKeys) do
+      local values = conn:zrangebyscore(zsetKey, startScore, endScore)
+      for _, value in ipairs(values) do
+        res[#res+1] = value
+      end
+    end
+    return self:parallelize(res, numPartitions)
+  end
+end
+
 function RedisRemoteContext:fromRedisZRangeWithScore(keysOrKeyPattern, startRange, endRange, numPartitions)
   local redisConf = RedisConfig.newFromSparkConf(self:getConf())
   local conn = redisConf:connection()
