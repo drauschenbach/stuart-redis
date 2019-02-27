@@ -1,19 +1,22 @@
 local Receiver = require 'stuart.streaming.Receiver'
-local redis = require 'redis'
+local RedisConfig = require 'stuart-redis.RedisConfig'
 local stuart = require 'stuart'
 
 local PubSubReceiver = stuart.class(Receiver)
 
-function PubSubReceiver:_init(ssc, uri, channels)
+function PubSubReceiver:_init(ssc, channels)
   Receiver._init(self, ssc)
-  self.uri = uri or 'redis://localhost'
   self.channels = channels
 end
 
 function PubSubReceiver:onStart()
   self.log = require 'stuart.internal.logging'.log
-  self.log:debug(string.format('Connecting to %s', self.uri))
-  self.redisClient = redis.connect(self.uri)
+  self.log:debug(string.format('Connecting to %s:%d',
+    self.ssc.sc.conf:get('spark.redis.host'),
+    self.ssc.sc.conf:get('spark.redis.port')
+  ))
+  local redisConf = RedisConfig.newFromSparkConf(self.ssc.sc:getConf())
+  self.redisClient = redisConf:connection()
   if not self.redisClient:ping() then
     self.log:error(string.format('Error connecting to %s: %s', self.uri, self.err))
     return

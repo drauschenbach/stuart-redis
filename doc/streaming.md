@@ -15,8 +15,7 @@ local PubSubReceiver = require 'stuart-redis.streaming.PubSubReceiver'
 local sc = stuart.NewContext()
 local ssc = stuart.NewStreamingContext(sc, 1.5)
 
-local redisUrl = os.getenv('REDIS_URL') or 'redis://127.0.0.1:6379'
-local receiver = PubSubReceiver.new(ssc, redisUrl, {'mychannel'})
+local receiver = PubSubReceiver.new(ssc, {'mychannel'})
 local dstream = ssc:receiverStream(receiver)
 dstream:foreachRDD(function(rdd)
   print('Received RDD: ' .. table.concat(rdd:collect(), ','))
