@@ -33,10 +33,10 @@ function RedisEmbeddedContext:fromRedisKV(keysOrKeyPattern, numPartitions)
   else
     local allKeys = redis.call('KEYS', keysOrKeyPattern)
     local keys = self:filterKeysByType(allKeys, 'string')
+    local mgetRes = redis.call('MGET', unpack(keys))
     local res = {}
-    for _, key in ipairs(keys) do
-      local value = redis.call('GET', key)
-      res[#res+1] = {key, value}
+    for i, key in ipairs(keys) do
+      res[#res+1] = {key, mgetRes[i]}
     end
     return self:parallelize(res, numPartitions)
   end
