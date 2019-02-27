@@ -21,7 +21,7 @@ Spark data structures are mapped to Redis with guidance from the [spark-redis](h
 $ luarocks install stuart-redis
 ```
 
-To work with a remote Redis server, a Redis client libary will also be required. [redis-lua](https://luarocks.org/modules/nrk/redis-lua) is currently favored because it is based on LuaSocket, [which can also be used within a Go app](https://github.com/BixData/gluasocket):
+To work with a remote Redis server, a Redis client libary will also be required. [redis-lua](https://luarocks.org/modules/nrk/redis-lua) is currently chosen because it is based on LuaSocket, which is widely available on many platforms, and [which can also be used within a Go app](https://github.com/BixData/gluasocket).
 
 ```sh
 $ luarocks install redis-lua
@@ -29,6 +29,7 @@ $ luarocks install redis-lua
 
 ## Documentation
 
+* [RDD](./doc/rdd.md)
 * [Streaming](./doc/streaming.md)
 
 ## Building
