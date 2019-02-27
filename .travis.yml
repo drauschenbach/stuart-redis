@@ -26,5 +26,5 @@ services:
   - redis-server
 
 script:
-  - luacheck --std max+busted --codes examples spec src --globals "_" redis --ignore 122 212 213 241 611
+  - luacheck --std max+busted --codes examples spec src --globals "_" redis --ignore 122 212 213 241 611 --exclude-files "**/*-with-dependencies.lua"
   - REDIS_URL=redis://localhost:6379 busted --verbose --defer-print
