@@ -55,6 +55,19 @@ describe('Redis Labs Spark-Redis RedisRddSuite', function()
     sc:toRedisSET (words     , 'all:words:set')
   end)
 
+  it('SparkContext:fromRedisHash', function()
+    if not stuart.istype(sc, RedisContext) then return pending('No REDIS_URL is configured') end
+    local expectedWordCounts = words
+      :map(function(word) return {word, 1} end)
+      :groupBy(function(e) return e[1] end)
+      :map(function(x) return {x[1], tostring(#x[2])} end)
+      :sortBy(function(x) return x[1] end)
+      :collect()
+    local redisHashRDD = sc:fromRedisHash('all:words:cnt:hash')
+    local actualWordCounts = redisHashRDD:sortByKey():collect()
+    assert.same(expectedWordCounts, actualWordCounts)
+  end)
+  
   it('SparkContext:fromRedisKV', function()
     if not stuart.istype(sc, RedisContext) then return pending('No REDIS_URL is configured') end
     local expectedWordCounts = words
@@ -68,10 +81,19 @@ describe('Redis Labs Spark-Redis RedisRddSuite', function()
     assert.same(expectedWordCounts, actualWordCounts)
   end)
   
-  it('SparkContext:fromRedisZSet', function()
+  it('SparkContext:fromRedisList', function()
     if not stuart.istype(sc, RedisContext) then return pending('No REDIS_URL is configured') end
-    local expectedWords = words:sortBy(function(x) return x end):distinct():collect()
-    local actualWords = sc:fromRedisZSet('all:words:cnt:sortedset'):sortBy(function(x) return x end):collect()
+    local expectedWords = words:sortBy(function(x) return x end):collect()
+    local redisListRDD = sc:fromRedisList('all:words:list')
+    local actualWords = redisListRDD:sortBy(function(x) return x end):collect()
+    assert.same(expectedWords, actualWords)
+  end)
+  
+  it('SparkContext:fromRedisSet', function()
+    if not stuart.istype(sc, RedisContext) then return pending('No REDIS_URL is configured') end
+    local expectedWords = words:distinct():sortBy(function(x) return x end):collect()
+    local redisSetRDD = sc:fromRedisSet('all:words:set')
+    local actualWords = redisSetRDD:sortBy(function(x) return x end):collect()
     assert.same(expectedWords, actualWords)
   end)
   
@@ -93,34 +115,25 @@ describe('Redis Labs Spark-Redis RedisRddSuite', function()
   end)
   --]]
   
-  -- TODO SparkContext:fromRedisZRangeWithScore
-  
-  it('SparkContext:fromRedisHash', function()
+  -- disable until Stuart 2.0.3 ships due to Stuart issue-129
+  --[[
+  it('SparkContext:fromRedisZRangeWithScore', function()
     if not stuart.istype(sc, RedisContext) then return pending('No REDIS_URL is configured') end
     local expectedWordCounts = words
       :map(function(word) return {word, 1} end)
-      :groupBy(function(e) return e[1] end)
+      :groupBy(function(x) return x[1] end)
       :map(function(x) return {x[1], tostring(#x[2])} end)
-      :sortBy(function(x) return x[1] end)
-      :collect()
-    local redisHashRDD = sc:fromRedisHash('all:words:cnt:hash')
-    local actualWordCounts = redisHashRDD:sortByKey():collect()
+      :sortBy(function(x) return {x[2], x[1]} end)
+      :take(16)
+    local actualWordCounts = sc:fromRedisZRangeWithScore('all:words:cnt:sortedset', 0, 15):collect()
     assert.same(expectedWordCounts, actualWordCounts)
   end)
+  --]]
   
-  it('SparkContext:fromRedisList', function()
+  it('SparkContext:fromRedisZSet', function()
     if not stuart.istype(sc, RedisContext) then return pending('No REDIS_URL is configured') end
-    local expectedWords = words:sortBy(function(x) return x end):collect()
-    local redisListRDD = sc:fromRedisList('all:words:list')
-    local actualWords = redisListRDD:sortBy(function(x) return x end):collect()
-    assert.same(expectedWords, actualWords)
-  end)
-  
-  it('SparkContext:fromRedisSet', function()
-    if not stuart.istype(sc, RedisContext) then return pending('No REDIS_URL is configured') end
-    local expectedWords = words:distinct():sortBy(function(x) return x end):collect()
-    local redisSetRDD = sc:fromRedisSet('all:words:set')
-    local actualWords = redisSetRDD:sortBy(function(x) return x end):collect()
+    local expectedWords = words:sortBy(function(x) return x end):distinct():collect()
+    local actualWords = sc:fromRedisZSet('all:words:cnt:sortedset'):sortBy(function(x) return x end):collect()
     assert.same(expectedWords, actualWords)
   end)
   
