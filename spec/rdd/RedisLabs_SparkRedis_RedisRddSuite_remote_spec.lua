@@ -4,7 +4,7 @@ local SparkConf = require 'stuart.SparkConf'
 local stuart = require 'stuart'
 local stuartRedis = require 'stuart-redis'
 
-describe('Redis Labs Spark-Redis RedisRddSuite', function()
+describe('Redis Labs Spark-Redis RedisRddSuite (using a remote Redis server)', function()
 
   local sc, words
 

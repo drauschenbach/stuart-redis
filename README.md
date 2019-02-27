@@ -29,7 +29,8 @@ $ luarocks install redis-lua
 
 ## Documentation
 
-* [Configuring](./doc/configuring.md)
+* [Remoting](./doc/remoting.md) (Configuring for use with a Remote Redis)
+* [Embedding](./doc/embedding.md) (Using embedded within a Redis EVAL)
 * [RDD](./doc/rdd.md)
 * [Streaming](./doc/streaming.md)
 

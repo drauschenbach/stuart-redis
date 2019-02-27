@@ -1,4 +1,6 @@
-*.rock
 .buildpath
 .project
 .settings
+*.rock
+/amalg.cache
+test*
