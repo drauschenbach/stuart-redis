@@ -84,6 +84,7 @@ describe('Redis Labs Spark-Redis RedisRddSuite (running embedded within a Redis 
     return result
   end
 
+
   setup(function()
     local redisUrl = os.getenv('REDIS_URL')
     local redisClientLib = require 'redis'
@@ -116,9 +117,10 @@ describe('Redis Labs Spark-Redis RedisRddSuite (running embedded within a Redis 
     sc:toRedisKV  (wordCounts)
 --    sc:toRedisZSET(wordCounts, 'all:words:cnt:sortedset')
     sc:toRedisHASH(wordCounts, 'all:words:cnt:hash')
---    sc:toRedisLIST(words     , 'all:words:list')
+    sc:toRedisLIST(words     , 'all:words:list')
 --    sc:toRedisSET (words     , 'all:words:set')
   end)
+
 
   it('SparkContext:fromRedisHash', function()
     if not stuart.istype(sc, RedisContext) then return pending('No REDIS_URL is configured') end
@@ -145,6 +147,7 @@ assert(
     assert.equals('SUCCESS', redisClient:eval(script, 0))
   end)
   
+  
   it('SparkContext:fromRedisKV', function()
     if not stuart.istype(sc, RedisContext) then return pending('No REDIS_URL is configured') end
     generateTestScript(blogContent, [[
@@ -159,6 +162,27 @@ local actualWordCounts = redisKVRDD:sortByKey():collect()
 assert(
   #expectedWordCounts == #actualWordCounts,
   'Expected ' .. #expectedWordCounts .. ' word counts but found ' .. #actualWordCounts)
+]])
+    amalgCapture()
+    replaceAmalgCacheRemoteWithEmbeddedContext()
+    amalg()
+    local testWithDependencies = assert(io.open('test-with-dependencies.lua', 'r'))
+    local script = testWithDependencies:read('*all')
+    local redisClientLib = require 'redis'
+    local redisClient = redisClientLib.connect(os.getenv('REDIS_URL'))
+    assert.equals('SUCCESS', redisClient:eval(script, 0))
+  end)
+  
+  
+  it('SparkContext:fromRedisList', function()
+    if not stuart.istype(sc, RedisContext) then return pending('No REDIS_URL is configured') end
+    generateTestScript(blogContent, [[
+local expectedWords = words:sortBy(function(x) return x end):collect()
+local redisListRDD = sc:fromRedisList('all:words:list')
+local actualWords = redisListRDD:sortBy(function(x) return x end):collect()
+assert(
+  #expectedWords == #actualWords,
+  'Expected ' .. #expectedWords .. ' words but found ' .. #actualWords)
 ]])
     amalgCapture()
     replaceAmalgCacheRemoteWithEmbeddedContext()

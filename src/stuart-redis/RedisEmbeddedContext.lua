@@ -42,6 +42,23 @@ function RedisEmbeddedContext:fromRedisKV(keysOrKeyPattern, numPartitions)
   end
 end
 
+function RedisEmbeddedContext:fromRedisList(keysOrKeyPattern, numPartitions)
+  if type(keysOrKeyPattern) == 'table' then
+    error('NIY')
+  else
+    local allKeys = redis.call('KEYS', keysOrKeyPattern)
+    local listKeys = self:filterKeysByType(allKeys, 'list')
+    local res = {}
+    for _, listKey in ipairs(listKeys) do
+      local values = redis.call('LRANGE', listKey, 0, -1)
+      for _, value in ipairs(values) do
+        res[#res+1] = value
+      end
+    end
+    return self:parallelize(res, numPartitions)
+  end
+end
+
 function RedisEmbeddedContext:toRedisHash()
   error('NIY')
 end
