@@ -1,4 +1,5 @@
-local aristotleSaid = [[We are what we repeatedly do. Excellence, then, is not an act, but a habit. It is the mark of an educated
+local aristotleSaid = [[We are what we repeatedly do. Excellence,
+then, is not an act, but a habit. It is the mark of an educated
 mind to be able to entertain a thought without accepting it.]]
 
 local stuart = require 'stuart'
