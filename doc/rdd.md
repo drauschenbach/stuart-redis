@@ -8,7 +8,7 @@
 
 Stuart-Redis provides a `RedisContext` class that extends Stuart's default Spark context class with functions specific to reading and writing RDDs with Redis.
 
-An export function that must be called, which rewrites the inheritance of a given Spark context so that it will now inherit from `RedisContext` and gain the new functions.
+An export function must be called, which rewrites the inheritance of a given Spark context so that it will now inherit from `RedisContext` and gain the new functions.
 
 ```lua
 local stuart = require 'stuart'
@@ -62,27 +62,21 @@ The Redis Set members will be written to `setRDD`.
 
 ### Sorted Sets
 
-```lua
-local zsetRDD = sc:fromRedisZSetWithScore('keyPattern*')
-local zsetRDD = sc:fromRedisZSetWithScore({'foo', 'bar'})
-```
-
-Using `fromRedisZSetWithScore` will store in `zsetRDD` an RDD that consists of members and their scores, from the Redis Sorted Sets whose keys are provided by keyPattern or key table.
+Using `fromRedisZSet` will store in `zsetRDD` an RDD that consists of members, from the Redis Sorted Sets whose keys are provided by keyPattern or key table:
 
 ```lua
 local zsetRDD = sc:fromRedisZSet('keyPattern*')
 local zsetRDD = sc:fromRedisZSet({'foo', 'bar'})
 ```
 
-Using `fromRedisZSet` will store in `zsetRDD` an RDD that consists of members, from the Redis Sorted Sets whose keys are provided by keyPattern or key table.
+Using `fromRedisZSetWithScore` will store in `zsetRDD` an RDD that consists of members and their scores, from the Redis Sorted Sets whose keys are provided by keyPattern or key table:
 
 ```lua
-local startPos, endPos = 3, 5
-local zsetRDD = sc:fromRedisZRangeWithScore('keyPattern*', startPos, endPos)
-local zsetRDD = sc:fromRedisZRangeWithScore({'foo', 'bar'}, startPos, endPos)
+local zsetRDD = sc:fromRedisZSetWithScore('keyPattern*')
+local zsetRDD = sc:fromRedisZSetWithScore({'foo', 'bar'})
 ```
 
-Using `fromRedisZRangeWithScore` will store in `zsetRDD` an RDD that consists of members and the members' ranges are within [startPos, endPos] of its own Sorted Set, from the Redis Sorted Sets whose keys are provided by keyPattern or key table.
+Using `fromRedisZRange` will store in `zsetRDD` an RDD that consists of members and the members' ranges are within [startPos, endPos] of its own Sorted Set, from the Redis Sorted Sets whose keys are provided by keyPattern or key table:
 
 ```lua
 local startPos, endPos = 3, 5
@@ -90,15 +84,15 @@ local zsetRDD = sc:fromRedisZRange('keyPattern*', startPos, endPos)
 local zsetRDD = sc:fromRedisZRange({'foo', 'bar'}, startPos, endPos)
 ```
 
-Using `fromRedisZSet` will store in `zsetRDD` an RDD that consists of members and the members' ranges are within [startPos, endPos] of its own Sorted Set, from the Redis Sorted Sets whose keys are provided by keyPattern or key table.
+Using `fromRedisZRangeWithScore` will store in `zsetRDD` an RDD that consists of members and the members' ranges are within [startPos, endPos] of its own Sorted Set, from the Redis Sorted Sets whose keys are provided by keyPattern or key table:
 
 ```lua
-local min, max = 52, 55
-local zsetRDD = sc:fromRedisZRangeByScoreWithScore('keyPattern*', min, max)
-local zsetRDD = sc:fromRedisZRangeByScoreWithScore({'foo', 'bar'}, min, max)
+local startPos, endPos = 3, 5
+local zsetRDD = sc:fromRedisZRangeWithScore('keyPattern*', startPos, endPos)
+local zsetRDD = sc:fromRedisZRangeWithScore({'foo', 'bar'}, startPos, endPos)
 ```
 
-Using `fromRedisZRangeByScoreWithScore` will store in `zsetRDD` an RDD that consists of members and the members' scores are within [min, max], from the Redis Sorted Sets whose keys are provided by keyPattern or key table.
+Using `fromRedisZRangeByScore` will store in `zsetRDD` an RDD that consists of members and the members' scores are within [min, max], from the Redis Sorted Sets whose keys are provided by keyPattern or key table:
 
 ```lua
 local min, max = 52, 55
@@ -106,7 +100,13 @@ local zsetRDD = sc:fromRedisZRangeByScore('keyPattern*', min, max)
 local zsetRDD = sc:fromRedisZRangeByScore({'foo', 'bar'}, min, max)
 ```
 
-Using `fromRedisZSet` will store in `zsetRDD` an RDD that consists of members and the members' scores are within [min, max], from the Redis Sorted Sets whose keys are provided by keyPattern or key table.
+Using `fromRedisZRangeByScoreWithScore` will store in `zsetRDD` an RDD that consists of members and the members' scores are within [min, max], from the Redis Sorted Sets whose keys are provided by keyPattern or key table:
+
+```lua
+local min, max = 52, 55
+local zsetRDD = sc:fromRedisZRangeByScoreWithScore('keyPattern*', min, max)
+local zsetRDD = sc:fromRedisZRangeByScoreWithScore({'foo', 'bar'}, min, max)
+```
 
 ## Writing data
 
@@ -134,12 +134,6 @@ Use the following to store an RDD in a Redis List:
 
 ```lua
 sc:toRedisLIST(listRDD, listName)
-```
-
-Use the following to store an RDD in a fixed-size Redis List:
-
-```lua
-sc:toRedisFixedLIST(listRDD, listName)
 ```
 
 The `listRDD` is an RDD that contains all of the list's string elements in order, and `listName` is the list's key name.
