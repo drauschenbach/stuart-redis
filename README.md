@@ -15,7 +15,7 @@ This library can be used in two ways:
 
 Spark data structures are mapped to Redis with guidance from the [spark-redis](https://github.com/RedisLabs/spark-redis) project by Redis Labs, and also mirrors that project's documentation structure.
 
-## Getting Started
+## Installing
 
 ```sh
 $ luarocks install stuart-redis
@@ -29,6 +29,7 @@ $ luarocks install redis-lua
 
 ## Documentation
 
+* [Configuring](./doc/configuring.md)
 * [RDD](./doc/rdd.md)
 * [Streaming](./doc/streaming.md)
 
