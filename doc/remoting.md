@@ -1,4 +1,4 @@
-## Configuring connection to Redis
+## Configuring connection to a remote Redis
 
 Below is an example configuration of a Spark context with Redis configuration:
 

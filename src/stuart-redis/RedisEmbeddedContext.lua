@@ -136,20 +136,83 @@ function RedisEmbeddedContext:fromRedisZSetWithScore(keysOrKeyPattern, numPartit
   return self:fromRedisZRangeWithScore(keysOrKeyPattern, 0, -1, numPartitions)
 end
 
-function RedisEmbeddedContext:toRedisHash()
-  error('NIY')
+function RedisEmbeddedContext:setHash(hashName, data, ttl)
+  for _, kv in ipairs(data) do
+    local k,v = kv[1], kv[2]
+    redis.call('HSET', hashName, k, v)
+    if ttl and ttl > 0 then
+      redis.call('EXPIRE', hashName, ttl)
+    end
+  end
 end
 
-function RedisEmbeddedContext:toRedisKV()
-  error('NIY')
+function RedisEmbeddedContext:setKVs(data, ttl)
+  for _, kv in ipairs(data) do
+    local k,v = kv[1], kv[2]
+    if ttl and ttl > 0 then
+      redis.call('SETEX', k, ttl, v)
+    else
+      redis.call('SET', k, v)
+    end
+  end
 end
 
-function RedisEmbeddedContext:toRedisSet()
-  error('NIY')
+function RedisEmbeddedContext:setList(listName, data, ttl)
+  for _, v in ipairs(data) do
+    redis.call('RPUSH', listName, v)
+    if ttl and ttl > 0 then
+      redis.call('EXPIRE', listName, ttl)
+    end
+  end
 end
 
-function RedisEmbeddedContext:toRedisZset()
-  error('NIY')
+function RedisEmbeddedContext:setSet(setName, data, ttl)
+  for _, v in ipairs(data) do
+    redis.call('SADD', setName, v)
+    if ttl and ttl > 0 then
+      redis.call('EXPIRE', setName, ttl)
+    end
+  end
+end
+
+function RedisEmbeddedContext:setZset(zsetName, data, ttl)
+  for _, kv in ipairs(data) do
+    local k,v = kv[1], tonumber(kv[2])
+    redis.call('ZADD', zsetName, v, k)
+    if ttl and ttl > 0 then
+      redis.call('EXPIRE', zsetName, ttl)
+    end
+  end
+end
+
+function RedisEmbeddedContext:toRedisHASH(keyValuesRDD, hashName, ttl)
+  keyValuesRDD:foreachPartition(function(data)
+    self:setHash(hashName, data, ttl)
+  end)
+end
+
+function RedisEmbeddedContext:toRedisKV(keyValuesRDD, ttl)
+  keyValuesRDD:foreachPartition(function(data)
+    self:setKVs(data, ttl)
+  end)
+end
+
+function RedisEmbeddedContext:toRedisLIST(valuesRDD, listName, ttl)
+  valuesRDD:foreachPartition(function(data)
+    self:setList(listName, data, ttl)
+  end)
+end
+
+function RedisEmbeddedContext:toRedisSET(valuesRDD, setName, ttl)
+  valuesRDD:foreachPartition(function(data)
+    self:setSet(setName, data, ttl)
+  end)
+end
+
+function RedisEmbeddedContext:toRedisZSET(valuesRDD, setName, ttl)
+  valuesRDD:foreachPartition(function(data)
+    self:setZset(setName, data, ttl)
+  end)
 end
 
 return RedisEmbeddedContext
