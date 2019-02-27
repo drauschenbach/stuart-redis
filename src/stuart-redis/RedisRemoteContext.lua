@@ -96,7 +96,7 @@ function RedisRemoteContext:fromRedisSet(keysOrKeyPattern, numPartitions)
   end
 end
 
-function RedisRemoteContext:fromRedisZSet(keysOrKeyPattern, numPartitions)
+function RedisRemoteContext:fromRedisZRange(keysOrKeyPattern, startRange, endRange, numPartitions)
   local redisConf = RedisConfig.newFromSparkConf(self:getConf())
   local conn = redisConf:connection()
   if type(keysOrKeyPattern) == 'table' then
@@ -105,13 +105,17 @@ function RedisRemoteContext:fromRedisZSet(keysOrKeyPattern, numPartitions)
     local zsetKeys = self:filterKeysByType(conn, conn:keys(keysOrKeyPattern), 'zset')
     local res = {}
     for _, zsetKey in ipairs(zsetKeys) do
-      local values = conn:zrange(zsetKey, 0, -1)
+      local values = conn:zrange(zsetKey, startRange, endRange)
       for _, value in ipairs(values) do
         res[#res+1] = value
       end
     end
     return self:parallelize(res, numPartitions)
   end
+end
+
+function RedisRemoteContext:fromRedisZSet(keysOrKeyPattern, numPartitions)
+  return self:fromRedisZRange(keysOrKeyPattern, 0, -1, numPartitions)
 end
 
 function RedisRemoteContext:setHash(hashName, data, ttl, redisConf)
