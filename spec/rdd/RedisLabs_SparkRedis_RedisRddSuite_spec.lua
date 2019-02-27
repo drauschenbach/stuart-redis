@@ -51,8 +51,8 @@ describe('Redis Labs Spark-Redis RedisRddSuite', function()
     sc:toRedisKV  (wordCounts)
     sc:toRedisZSET(wordCounts, 'all:words:cnt:sortedset')
     sc:toRedisHASH(wordCounts, 'all:words:cnt:hash')
-    sc:toRedisLIST(words, 'all:words:list')
-    sc:toRedisSET (words, 'all:words:set')
+    sc:toRedisLIST(words     , 'all:words:list')
+    sc:toRedisSET (words     , 'all:words:set')
   end)
 
   it('SparkContext:fromRedisKV', function()
@@ -68,8 +68,15 @@ describe('Redis Labs Spark-Redis RedisRddSuite', function()
     assert.same(expectedWordCounts, actualWordCounts)
   end)
   
-  -- TODO RedisZsetRDD
-
+  it('SparkContext:fromRedisZSet', function()
+    if not stuart.istype(sc, RedisContext) then return pending('No REDIS_URL is configured') end
+    local expectedWords = words:sortBy(function(x) return x end):distinct():collect()
+    local actualWords = sc:fromRedisZSet('all:words:cnt:sortedset'):sortBy(function(x) return x end):collect()
+    assert.same(expectedWords, actualWords)
+  end)
+  
+  -- TODO SparkContext:fromRedisZSetWithScore
+  
   it('SparkContext:fromRedisHash', function()
     if not stuart.istype(sc, RedisContext) then return pending('No REDIS_URL is configured') end
     local expectedWordCounts = words
