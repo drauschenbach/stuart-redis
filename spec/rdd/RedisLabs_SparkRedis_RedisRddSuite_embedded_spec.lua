@@ -247,4 +247,31 @@ assert(
     assert.equals('SUCCESS', redisClient:eval(script, 0))
   end)
   
+  
+  -- TODO fromRedisZRangeByScoreWithScore
+  
+  
+  -- TODO fromRedisZRangeWithScore
+  
+  
+  it('SparkContext:fromRedisZSet', function()
+    if not stuart.istype(sc, RedisContext) then return pending('No REDIS_URL is configured') end
+    generateTestScript(blogContent, [[
+local expectedWords = words:sortBy(function(x) return x end):distinct():collect()
+local actualWords = sc:fromRedisZSet('all:words:cnt:sortedset'):sortBy(function(x) return x end):collect()
+assert(
+  #expectedWords == #actualWords,
+  'Expected ' .. #expectedWords .. ' words but found ' .. #actualWords)
+]])
+    amalgCapture()
+    replaceAmalgCacheRemoteWithEmbeddedContext()
+    amalg()
+    local testWithDependencies = assert(io.open('test-with-dependencies.lua', 'r'))
+    local script = testWithDependencies:read('*all')
+    local redisClientLib = require 'redis'
+    local redisClient = redisClientLib.connect(os.getenv('REDIS_URL'))
+    assert.equals('SUCCESS', redisClient:eval(script, 0))
+  end)
+  
+  
 end)
