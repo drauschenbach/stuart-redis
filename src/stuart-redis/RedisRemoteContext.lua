@@ -4,6 +4,15 @@ local stuart = require 'stuart'
 
 local RedisRemoteContext = stuart.class(RedisContext)
 
+function RedisRemoteContext:filterKeysByType(conn, keys, typeFilter)
+  local res = {}
+  for _, key in ipairs(keys) do
+    local type = conn:type(key)
+    if type == typeFilter then res[#res+1] = key end
+  end
+  return res
+end
+
 function RedisRemoteContext:foreachWithPipeline(redisConf, items, f)
   local conn = redisConf:connection()
   
@@ -19,6 +28,152 @@ function RedisRemoteContext:foreachWithPipeline(redisConf, items, f)
     f(conn, kv)
   end
   
+end
+
+function RedisRemoteContext:fromRedisHash(keysOrKeyPattern, numPartitions)
+  local redisConf = RedisConfig.newFromSparkConf(self:getConf())
+  local conn = redisConf:connection()
+  local hashKeys = self:filterKeysByType(conn, conn:keys(keysOrKeyPattern), 'hash')
+  local res = {}
+  for _, hashKey in ipairs(hashKeys) do
+    local kvs = conn:hgetall(hashKey)
+    for k,v in pairs(kvs) do
+      res[#res+1] = {k, v}
+    end
+  end
+  return self:parallelize(res, numPartitions)
+end
+
+function RedisRemoteContext:fromRedisKV(keysOrKeyPattern, numPartitions)
+  local redisConf = RedisConfig.newFromSparkConf(self:getConf())
+  local conn = redisConf:connection()
+  if type(keysOrKeyPattern) == 'table' then
+    error('NIY')
+  else
+    local keys = self:filterKeysByType(conn, conn:keys(keysOrKeyPattern), 'string')
+    local res = {}
+    for _, key in ipairs(keys) do
+      local value = conn:get(key)
+      res[#res+1] = {key, value}
+    end
+    return self:parallelize(res, numPartitions)
+  end
+end
+
+function RedisRemoteContext:fromRedisList(keysOrKeyPattern, numPartitions)
+  local redisConf = RedisConfig.newFromSparkConf(self:getConf())
+  local conn = redisConf:connection()
+  if type(keysOrKeyPattern) == 'table' then
+    error('NIY')
+  else
+    local listKeys = self:filterKeysByType(conn, conn:keys(keysOrKeyPattern), 'list')
+    local res = {}
+    for _, listKey in ipairs(listKeys) do
+      local values = conn:lrange(listKey, 0, -1)
+      for _, value in ipairs(values) do
+        res[#res+1] = value
+      end
+    end
+    return self:parallelize(res, numPartitions)
+  end
+end
+
+function RedisRemoteContext:fromRedisSet(keysOrKeyPattern, numPartitions)
+  local redisConf = RedisConfig.newFromSparkConf(self:getConf())
+  local conn = redisConf:connection()
+  if type(keysOrKeyPattern) == 'table' then
+    error('NIY')
+  else
+    local setKeys = self:filterKeysByType(conn, conn:keys(keysOrKeyPattern), 'set')
+    local res = {}
+    for _, setKey in ipairs(setKeys) do
+      local values = conn:smembers(setKey)
+      for _, value in ipairs(values) do
+        res[#res+1] = value
+      end
+    end
+    return self:parallelize(res, numPartitions)
+  end
+end
+
+function RedisRemoteContext:fromRedisZRange(keysOrKeyPattern, startRange, endRange, numPartitions)
+  local redisConf = RedisConfig.newFromSparkConf(self:getConf())
+  local conn = redisConf:connection()
+  if type(keysOrKeyPattern) == 'table' then
+    error('NIY')
+  else
+    local zsetKeys = self:filterKeysByType(conn, conn:keys(keysOrKeyPattern), 'zset')
+    local res = {}
+    for _, zsetKey in ipairs(zsetKeys) do
+      local values = conn:zrange(zsetKey, startRange, endRange)
+      for _, value in ipairs(values) do
+        res[#res+1] = value
+      end
+    end
+    return self:parallelize(res, numPartitions)
+  end
+end
+
+function RedisRemoteContext:fromRedisZRangeByScore(keysOrKeyPattern, startScore, endScore, numPartitions)
+  local redisConf = RedisConfig.newFromSparkConf(self:getConf())
+  local conn = redisConf:connection()
+  if type(keysOrKeyPattern) == 'table' then
+    error('NIY')
+  else
+    local zsetKeys = self:filterKeysByType(conn, conn:keys(keysOrKeyPattern), 'zset')
+    local res = {}
+    for _, zsetKey in ipairs(zsetKeys) do
+      local values = conn:zrangebyscore(zsetKey, startScore, endScore)
+      for _, value in ipairs(values) do
+        res[#res+1] = value
+      end
+    end
+    return self:parallelize(res, numPartitions)
+  end
+end
+
+function RedisRemoteContext:fromRedisZRangeByScoreWithScore(keysOrKeyPattern, startScore, endScore, numPartitions)
+  local redisConf = RedisConfig.newFromSparkConf(self:getConf())
+  local conn = redisConf:connection()
+  if type(keysOrKeyPattern) == 'table' then
+    error('NIY')
+  else
+    local zsetKeys = self:filterKeysByType(conn, conn:keys(keysOrKeyPattern), 'zset')
+    local res = {}
+    for _, zsetKey in ipairs(zsetKeys) do
+      local values = conn:zrangebyscore(zsetKey, startScore, endScore, 'WITHSCORES')
+      for _, value in ipairs(values) do
+        res[#res+1] = value
+      end
+    end
+    return self:parallelize(res, numPartitions)
+  end
+end
+
+function RedisRemoteContext:fromRedisZRangeWithScore(keysOrKeyPattern, startRange, endRange, numPartitions)
+  local redisConf = RedisConfig.newFromSparkConf(self:getConf())
+  local conn = redisConf:connection()
+  if type(keysOrKeyPattern) == 'table' then
+    error('NIY')
+  else
+    local zsetKeys = self:filterKeysByType(conn, conn:keys(keysOrKeyPattern), 'zset')
+    local res = {}
+    for _, zsetKey in ipairs(zsetKeys) do
+      local values = conn:zrange(zsetKey, startRange, endRange, 'WITHSCORES')
+      for _, value in ipairs(values) do
+        res[#res+1] = value
+      end
+    end
+    return self:parallelize(res, numPartitions)
+  end
+end
+
+function RedisRemoteContext:fromRedisZSet(keysOrKeyPattern, numPartitions)
+  return self:fromRedisZRange(keysOrKeyPattern, 0, -1, numPartitions)
+end
+
+function RedisRemoteContext:fromRedisZSetWithScore(keysOrKeyPattern, numPartitions)
+  return self:fromRedisZRangeWithScore(keysOrKeyPattern, 0, -1, numPartitions)
 end
 
 function RedisRemoteContext:setHash(hashName, data, ttl, redisConf)
