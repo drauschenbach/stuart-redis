@@ -7,8 +7,6 @@ function RedisEmbeddedContext:filterKeysByType(keys, typeFilter)
   local res = {}
   for _, key in ipairs(keys) do
     local typeRes = redis.call('TYPE', key)
-    for k,v in pairs(typeRes) do
-    end
     local type = typeRes['ok']
     if type == typeFilter then res[#res+1] = key end
   end
@@ -27,6 +25,21 @@ function RedisEmbeddedContext:fromRedisHash(keysOrKeyPattern, numPartitions)
     end
   end
   return self:parallelize(res, numPartitions)
+end
+
+function RedisEmbeddedContext:fromRedisKV(keysOrKeyPattern, numPartitions)
+  if type(keysOrKeyPattern) == 'table' then
+    error('NIY')
+  else
+    local allKeys = redis.call('KEYS', keysOrKeyPattern)
+    local keys = self:filterKeysByType(allKeys, 'string')
+    local res = {}
+    for _, key in ipairs(keys) do
+      local value = redis.call('GET', key)
+      res[#res+1] = {key, value}
+    end
+    return self:parallelize(res, numPartitions)
+  end
 end
 
 function RedisEmbeddedContext:toRedisHash()

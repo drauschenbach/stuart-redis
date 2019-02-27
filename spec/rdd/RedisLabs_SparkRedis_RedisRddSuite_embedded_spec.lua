@@ -44,11 +44,19 @@ local function generateTestScript(blogContent, test)
 end
 
 local function amalgCapture()
+  os.remove('amalg.cache')
   return os.execute('lua -lamalg-redis test.lua')
 end
 
 local function amalg()
-  return os.execute('amalg-redis.lua -s test.lua -o test-with-dependencies.lua -c')
+  return os.execute('amalg-redis.lua'
+    .. ' -s test.lua'
+    .. ' -o test-with-dependencies.lua'
+    .. ' -c'
+    .. ' -i "^redis$"' -- omit redis client lib
+    .. ' -i "^socket"' -- omit LuaSocket
+    .. ' -i "RedisConfig$"' -- omit remote endpoint support
+    .. ' -i "RedisEndpoint$"') -- omit remote endpoint support
 end
 
 local function replaceAmalgCacheRemoteWithEmbeddedContext()
@@ -105,7 +113,7 @@ describe('Redis Labs Spark-Redis RedisRddSuite (running embedded within a Redis 
       :reduceByKey(function(r, x) return r+x end)
       :map(function(e) return {e[1], tostring(e[2])} end)
     
---    sc:toRedisKV  (wordCounts)
+    sc:toRedisKV  (wordCounts)
 --    sc:toRedisZSET(wordCounts, 'all:words:cnt:sortedset')
     sc:toRedisHASH(wordCounts, 'all:words:cnt:hash')
 --    sc:toRedisLIST(words     , 'all:words:list')
@@ -123,6 +131,31 @@ local expectedWordCounts = words
   :collect()
 local redisHashRDD = sc:fromRedisHash('all:words:cnt:hash')
 local actualWordCounts = redisHashRDD:sortByKey():collect()
+assert(
+  #expectedWordCounts == #actualWordCounts,
+  'Expected ' .. #expectedWordCounts .. ' word counts but found ' .. #actualWordCounts)
+]])
+    amalgCapture()
+    replaceAmalgCacheRemoteWithEmbeddedContext()
+    amalg()
+    local testWithDependencies = assert(io.open('test-with-dependencies.lua', 'r'))
+    local script = testWithDependencies:read('*all')
+    local redisClientLib = require 'redis'
+    local redisClient = redisClientLib.connect(os.getenv('REDIS_URL'))
+    assert.equals('SUCCESS', redisClient:eval(script, 0))
+  end)
+  
+  it('SparkContext:fromRedisKV', function()
+    if not stuart.istype(sc, RedisContext) then return pending('No REDIS_URL is configured') end
+    generateTestScript(blogContent, [[
+local expectedWordCounts = words
+  :map(function(word) return {word, 1} end)
+  :groupBy(function(e) return e[1] end)
+  :map(function(x) return {x[1], tostring(#x[2])} end)
+  :sortBy(function(x) return x[1] end)
+  :collect()
+local redisKVRDD = sc:fromRedisKV('*')
+local actualWordCounts = redisKVRDD:sortByKey():collect()
 assert(
   #expectedWordCounts == #actualWordCounts,
   'Expected ' .. #expectedWordCounts .. ' word counts but found ' .. #actualWordCounts)
