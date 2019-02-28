@@ -11,9 +11,9 @@ A library for reading and writing data from and to [Redis](https://redis.io) wit
 This library can be used in two ways:
 
 * __external__ to a remote Redis server, in which case the [redis-lua](https://luarocks.org/modules/nrk/redis-lua) client library is used to read and write remote data structures
-* __embedded__ within an [amalgamated](https://github.com/BixData/lua-amalg-redis) Stuart-based Spark job within a [Redis eval](https://redis.io/commands/eval) command, in which case the `redis` global variable is used to read and write local data structures
+* __embedded__ within a Stuart-based Spark job submitted via the [Redis EVAL](https://redis.io/commands/eval) command, in which case the `redis` global variable is used to read and write local data structures
 
-Spark data structures are mapped to Redis with guidance from the [spark-redis](https://github.com/RedisLabs/spark-redis) project by Redis Labs, and also mirrors that project's documentation structure.
+Spark data structures are mapped to Redis with guidance from the [spark-redis](https://github.com/RedisLabs/spark-redis) project by [Redis Labs](https://redislabs.com).
 
 ## Installing
 
@@ -29,7 +29,7 @@ $ luarocks install redis-lua
 
 ## Documentation
 
-* [Remoting](./doc/remoting.md) (Configuring for use with a Remote Redis)
+* [Remoting](./doc/remoting.md) (Configuring for use with a remote Redis)
 * [Embedding](./doc/embedding.md) (Using embedded within a Redis EVAL)
 * [RDD](./doc/rdd.md)
 * [Streaming](./doc/streaming.md)
