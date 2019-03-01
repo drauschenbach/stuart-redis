@@ -177,7 +177,7 @@ describe('Redis Labs Spark-Redis RedisRddSuite (using a remote Redis server)', f
     local expectedWordCounts = words
       :map(function(word) return {word, 1} end)
       :groupBy(function(x) return x[1] end)
-      :map(function(x) return {x[1], tostring(#x[2])} end)
+      :map(function(x) return {x[1], #x[2]} end)
       :sortBy(function(x) return x[1] end)
       :collect()
     local actualWordCounts = sc:fromRedisZSetWithScore('all:words:cnt:sortedset')
