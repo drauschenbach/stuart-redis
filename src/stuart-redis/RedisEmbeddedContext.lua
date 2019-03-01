@@ -120,7 +120,7 @@ function RedisEmbeddedContext:fromRedisZRangeWithScore(keysOrKeyPattern, startRa
     for _, zsetKey in ipairs(zsetKeys) do
       local kvs = redis.call('ZRANGE', zsetKey, startRange, endRange, 'WITHSCORES')
       for i=2,#kvs,2 do
-        local k, v = kvs[i-1], kvs[i]
+        local k, v = kvs[i-1], tonumber(kvs[i])
         res[#res+1] = {k, v}
       end
     end

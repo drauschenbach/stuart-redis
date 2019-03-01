@@ -141,9 +141,9 @@ function RedisRemoteContext:fromRedisZRangeByScoreWithScore(keysOrKeyPattern, st
     local zsetKeys = self:filterKeysByType(conn, conn:keys(keysOrKeyPattern), 'zset')
     local res = {}
     for _, zsetKey in ipairs(zsetKeys) do
-      local values = conn:zrangebyscore(zsetKey, startScore, endScore, 'WITHSCORES')
-      for _, value in ipairs(values) do
-        res[#res+1] = value
+      local kvs = conn:zrangebyscore(zsetKey, startScore, endScore, 'WITHSCORES')
+      for _, kv in ipairs(kvs) do
+        res[#res+1] = {kv[1], tonumber(kv[2])}
       end
     end
     return self:parallelize(res, numPartitions)
@@ -159,9 +159,9 @@ function RedisRemoteContext:fromRedisZRangeWithScore(keysOrKeyPattern, startRang
     local zsetKeys = self:filterKeysByType(conn, conn:keys(keysOrKeyPattern), 'zset')
     local res = {}
     for _, zsetKey in ipairs(zsetKeys) do
-      local values = conn:zrange(zsetKey, startRange, endRange, 'WITHSCORES')
-      for _, value in ipairs(values) do
-        res[#res+1] = value
+      local kvs = conn:zrange(zsetKey, startRange, endRange, 'WITHSCORES')
+      for _, kv in ipairs(kvs) do
+        res[#res+1] = {kv[1], tonumber(kv[2])}
       end
     end
     return self:parallelize(res, numPartitions)
