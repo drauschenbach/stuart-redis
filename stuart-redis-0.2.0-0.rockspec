@@ -1,8 +1,8 @@
 package = "stuart-redis"
-version = "0.1.0-0"
+version = "0.2.0-0"
 source = {
-   url = "https://github.com/BixData/stuart-redis/archive/0.1.0-0.tar.gz",
-   dir = "stuart-redis-0.1.0-0"
+   url = "https://github.com/BixData/stuart-redis/archive/0.2.0-0.tar.gz",
+   dir = "stuart-redis-0.2.0-0"
 }
 description = {
    summary = "Redis support for Stuart, the Spark runtime for embedding & edge computing",

@@ -20,7 +20,7 @@ install:
   - luarocks install net-url 0.9
   - luarocks install redis-lua
   - luarocks install stuart
-  - luarocks make stuart-redis-0.1.0-0.rockspec
+  - luarocks make stuart-redis-0.2.0-0.rockspec
 
 services:
   - redis-server
