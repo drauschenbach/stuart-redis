@@ -1,4 +1,4 @@
-## [Unreleased]
+## [0.2.0] - 2019-03-08
 ### Added
 - [#2](https://github.com/BixData/stuart-redis/issues/2) RDD read-write support for string, hash, list, set, sorted set
 
